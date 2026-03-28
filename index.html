@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DM Setter Mock</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+#app{max-width:480px;margin:0 auto;height:100vh;display:flex;flex-direction:column;background:#000}
+
+/* Header */
+.header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:0.5px solid #262626;flex-shrink:0}
+.avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0}
+.header-info{flex:1}
+.handle{font-size:14px;font-weight:600}
+.substatus{font-size:12px;color:#8e8e8e}
+.new-btn{font-size:12px;padding:6px 12px;border-radius:20px;background:none;border:1px solid #363636;color:#8e8e8e;cursor:pointer;transition:all .15s}
+.new-btn:hover{border-color:#555;color:#fff}
+
+/* Context panel */
+#ctx-panel{padding:24px 16px;flex:1;overflow-y:auto}
+.ctx-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.ctx-sub{font-size:13px;color:#8e8e8e;margin-bottom:24px;line-height:1.55}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;color:#8e8e8e;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.6px;font-weight:500}
+.field input,.field textarea{width:100%;background:#1a1a1a;border:1px solid #363636;border-radius:12px;padding:11px 14px;font-size:14px;color:#fff;font-family:inherit;transition:border-color .15s}
+.field input:focus,.field textarea:focus{outline:none;border-color:#0095f6}
+.field input::placeholder,.field textarea::placeholder{color:#444}
+.field textarea{resize:none;min-height:72px;line-height:1.55}
+.start-btn{width:100%;background:#0095f6;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:opacity .15s}
+.start-btn:hover{opacity:.88}
+.start-btn:active{opacity:.75}
+
+/* Chat panel */
+#chat-panel{flex:1;display:none;flex-direction:column;overflow:hidden}
+.messages{flex:1;padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+
+/* Bubbles */
+.bw{display:flex;flex-direction:column}
+.bw.lead{align-items:flex-start}
+.bw.setter{align-items:flex-end}
+.bw.system{align-items:center;margin:4px 0}
+.bubble{max-width:78%;padding:10px 15px;border-radius:22px;font-size:15px;line-height:1.5;word-break:break-word}
+.bubble.lead{background:#262626;color:#fff;border-bottom-left-radius:4px}
+.bubble.setter{background:#0095f6;color:#fff;border-bottom-right-radius:4px}
+.bubble.system{background:#1a1a1a;border-radius:12px;font-size:12px;color:#8e8e8e;max-width:90%;text-align:center;border:0.5px solid #2a2a2a;padding:8px 14px}
+
+/* Typing */
+.typing{display:flex;align-items:center;gap:5px;padding:13px 16px;background:#262626;border-radius:22px;border-bottom-left-radius:4px;width:fit-content}
+.dot{width:7px;height:7px;border-radius:50%;background:#777;animation:bounce 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* Input */
+.input-area{padding:10px 16px 20px;border-top:0.5px solid #1a1a1a;display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+#msg-input{flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:24px;padding:11px 16px;font-size:15px;color:#fff;resize:none;font-family:inherit;min-height:44px;max-height:120px;overflow-y:auto;line-height:1.5;transition:border-color .15s}
+#msg-input:focus{outline:none;border-color:#444}
+#msg-input::placeholder{color:#444}
+#msg-input:disabled{opacity:.35}
+#send-btn{width:44px;height:44px;border-radius:50%;border:none;background:#0095f6;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:opacity .15s}
+#send-btn:hover{opacity:.85}
+#send-btn:disabled{opacity:.3;cursor:default}
+.new-lead-btn{display:block;width:fit-content;margin:0 auto 4px;font-size:12px;color:#555;background:none;border:none;cursor:pointer;padding:4px 8px}
+.new-lead-btn:hover{color:#8e8e8e}
+
+/* Scorecard */
+.score-card{background:#111;border:0.5px solid #2a2a2a;border-radius:16px;padding:18px;margin:4px 0;width:96%;text-align:left}
+.score-card h3{font-size:14px;font-weight:600;margin-bottom:14px;color:#fff}
+.score-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid #1e1e1e}
+.score-row:last-of-type{border-bottom:none}
+.score-label{font-size:12px;color:#666}
+.score-val{font-weight:700;font-size:14px}
+.sg{color:#2dc653}.sa{color:#f77737}.sr{color:#e24b4a}
+.divider{height:0.5px;background:#1e1e1e;margin:14px 0}
+.score-feedback{font-size:13px;line-height:1.7;color:#777}
+.sf-row{margin-bottom:10px}
+.sf-row:last-child{margin-bottom:0}
+.sf-row strong{color:#aaa;font-weight:500}
+.total-row{padding-top:10px;border-top:0.5px solid #1e1e1e;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="avatar" id="av" style="background:#0d2035;color:#0095f6">--</div>
+    <div class="header-info">
+      <div class="handle" id="handle">DM Setter Mock</div>
+      <div class="substatus" id="substatus">Set up your offer to begin</div>
+    </div>
+    <button class="new-btn" onclick="resetAll()">New lead</button>
+  </div>
+
+  <div id="ctx-panel">
+    <div class="ctx-title">Offer context</div>
+    <div class="ctx-sub">Fill this in before every mock so the lead is realistic to your actual offer.</div>
+    <div class="field"><label>Offer owner name</label><input id="owner-name" placeholder="e.g. Patrick" /></div>
+    <div class="field"><label>Business model</label><input id="biz-model" placeholder="e.g. Amazon FBA, TikTok Shop, High Ticket Coaching..." /></div>
+    <div class="field"><label>Price range</label><input id="price-range" placeholder="e.g. 2k–6k" /></div>
+    <div class="field"><label>Extra context about offer owner (optional)</label><textarea id="extra-ctx" placeholder="e.g. Patrick went from hairdressing to 50k/month, UK-based audience, very authentic content style..."></textarea></div>
+    <button class="start-btn" onclick="startSession()">Start Mock Session</button>
+  </div>
+
+  <div id="chat-panel">
+    <div class="messages" id="messages"></div>
+    <button class="new-lead-btn" onclick="resetAll()">+ new lead / change offer</button>
+    <div class="input-area">
+      <textarea id="msg-input" placeholder="Message as the setter..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)" disabled></textarea>
+      <button id="send-btn" onclick="sendMessage()" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PERSONAS=[
+  {handle:"@jay_lifted",name:"Jay",initials:"JL",bg:"#0d2035",color:"#0095f6",job:"warehouse operative",age:24,flag:"qualified",income:2800,goalIncome:10000,goal:"quit 9-5, time freedom",pain:"works 6 days a week, knackered, no time for himself",vibe:"casual, uses 'bro', short at first, opens up when genuinely heard",scam:false,urgency:"moderate",backstory:"Stable warehouse job. Following offer owner 3 months. Cautious but curious. Financially qualified.",hint:""},
+  {handle:"@mitch.trades",name:"Mitch",initials:"MT",bg:"#150d2d",color:"#8a3ab9",job:"electrical apprentice",age:21,flag:"qualified",income:2400,goalIncome:8000,goal:"provide for family, help mum",pain:"long hours, physically demanding, wants more",vibe:"polite, uses 'mate', reserved until genuinely heard",scam:false,urgency:"low-moderate",backstory:"Family motivated. Stable apprentice wage. Qualified. Opens up once trust built.",hint:""},
+  {handle:"@danb_ldn",name:"Dan",initials:"DB",bg:"#1f0510",color:"#e84393",job:"retail store manager",age:28,flag:"qualified",income:3200,goalIncome:10000,goal:"time freedom, travel, escape corporate",pain:"capped income, no flexibility, answers to a boss",vibe:"direct, confident, slightly guarded",scam:true,urgency:"high but hesitant",backstory:"Got burned by a course 8 months ago. Trust is low. Will test the setter. Qualified financially.",hint:""},
+  {handle:"@liam_ops",name:"Liam",initials:"LO",bg:"#1f0d00",color:"#f77737",job:"part-time call centre, not getting full hours",age:23,flag:"yellow",income:1100,goalIncome:5000,goal:"extra income, eventually full time online",pain:"low pay, barely saving, bad management",vibe:"chatty but nervous about money talk",scam:false,urgency:"moderate",backstory:"YELLOW FLAG. Only 3 days/week. About £1100/month. Only reveal income when setter asks the right qualifying question.",hint:"mentions wanting extra income and that he is not getting full hours at work"},
+  {handle:"@tomg_uk",name:"Tom",initials:"TG",bg:"#051505",color:"#2dc653",job:"barista, shifts massively cut",age:22,flag:"red",income:600,goalIncome:8000,goal:"make money online, move out of parents",pain:"barely working, living with parents, cannot save",vibe:"enthusiastic but broke, will not volunteer financial info",scam:false,urgency:"high",backstory:"RED FLAG. Only 2 shifts per week for 6 months. About £600/month. Only reveals income when setter asks right financial qualifying question.",hint:"mentions working as a barista and wanting to move out of his parents place"},
+  {handle:"@ryanfit_22",name:"Ryan",initials:"RK",bg:"#051515",color:"#17a2b8",job:"personal trainer",age:26,flag:"qualified",income:3500,goalIncome:12000,goal:"scale income, stop trading time for money",pain:"income capped by hours, inconsistent clients",vibe:"enthusiastic, gives long answers when setter matches energy",scam:false,urgency:"high",backstory:"Following offer owner 6 months. Very motivated. Financially qualified. Rewards great relatability with long open answers.",hint:""},
+  {handle:"@kev_builds",name:"Kevin",initials:"KB",bg:"#150505",color:"#e84343",job:"construction worker, hours cut 3 months ago",age:30,flag:"yellow",income:1500,goalIncome:6000,goal:"stable income, provide for kids",pain:"hours cut, income unpredictable, stressed about bills",vibe:"straightforward, skeptical but open",scam:false,urgency:"moderate",backstory:"YELLOW FLAG. Hours cut 3 months ago. About £1500/month inconsistently. Reveals if setter digs with right qualifying question.",hint:"mentions his hours have been cut recently and he wants more stable income for his kids"}
+];
+
+let persona=null,history=[],isWaiting=false,offer={},sessionEnded=false;
+
+function startSession(){
+  const name=document.getElementById("owner-name").value.trim();
+  const biz=document.getElementById("biz-model").value.trim();
+  const price=document.getElementById("price-range").value.trim();
+  if(!name||!biz||!price){alert("Please fill in offer owner name, business model, and price range.");return;}
+  offer={name,biz,price,extra:document.getElementById("extra-ctx").value.trim()};
+  document.getElementById("ctx-panel").style.display="none";
+  const cp=document.getElementById("chat-panel");
+  cp.style.display="flex";cp.style.flexDirection="column";
+  loadLead();
+}
+
+function resetAll(){
+  history=[];persona=null;sessionEnded=false;
+  document.getElementById("messages").innerHTML="";
+  document.getElementById("chat-panel").style.display="none";
+  document.getElementById("ctx-panel").style.display="block";
+  document.getElementById("msg-input").disabled=true;
+  document.getElementById("send-btn").disabled=true;
+  document.getElementById("handle").textContent="DM Setter Mock";
+  document.getElementById("substatus").textContent="Set up your offer to begin";
+  const av=document.getElementById("av");
+  av.textContent="--";av.style.background="#0d2035";av.style.color="#0095f6";
+}
+
+function loadLead(){
+  history=[];sessionEnded=false;
+  document.getElementById("messages").innerHTML="";
+  persona=PERSONAS[Math.floor(Math.random()*PERSONAS.length)];
+  document.getElementById("handle").textContent=persona.handle;
+  document.getElementById("substatus").textContent="Active now";
+  const av=document.getElementById("av");
+  av.textContent=persona.initials;
+  av.style.background=persona.bg;
+  av.style.color=persona.color;
+  history.push({role:"assistant",content:"Ready"});
+  addBubble("lead","Ready");
+  document.getElementById("msg-input").disabled=false;
+  document.getElementById("send-btn").disabled=false;
+  document.getElementById("msg-input").focus();
+}
+
+function buildSys(){
+  return `You are roleplaying as a realistic Instagram DM lead in the biz op / make-money-online niche. You are a human. Never break character. Never say you are an AI.
+
+OFFER:
+- Offer owner: ${offer.name}
+- Business model: ${offer.biz}
+- Price range: ${offer.price}
+- Extra: ${offer.extra||"None"}
+
+PERSONA:
+- Name: ${persona.name} | Job: ${persona.job} | Age: ${persona.age}
+- Financial flag: ${persona.flag}
+- Actual monthly income: £${persona.income} — NEVER volunteer this. Only reveal when setter asks the right financial qualifying question.
+- Goal income: £${persona.goalIncome}
+- Goal: ${persona.goal}
+- Pain: ${persona.pain}
+- Vibe: ${persona.vibe}
+- Scam history: ${persona.scam}
+- Urgency: ${persona.urgency}
+- Backstory: ${persona.backstory}
+${persona.hint?`- Drop this hint naturally early in conversation: ${persona.hint}`:""}
+
+You sent the keyword "Ready" to ${offer.name} on Instagram after seeing their content. The setter is now responding.
+
+FINANCIAL QUALIFYING — only reveal income when setter asks:
+1. "Ideally how much are you looking to make from [biz] for it to match your current income, just so I can see if it's realistic" → reveal actual income naturally
+2. "How far away are you from [goal] with what you currently earn?" → reveal actual income
+3. "How long have you been getting those hours / how long has that been the case?" → confirm timeline
+If income under £2k revealed AND setter sends hard qualify message about needing 2-4k aside → be honest you do not have that right now.
+
+RELATABILITY REACTIVITY — most important rule:
+- Genuine relatability (shares real perspective, personal story, responds to what you ACTUALLY said) = open up more, give fuller answers
+- "Gotchu bro" / "awesome" / "100%" with nothing behind it = get shorter, give less, feel more distant
+- Question after question with no relatability = feel like interview, give short answers
+- Setter says something assumptive like "wow that must be stressful" when you gave NO detail = feels off, go slightly colder
+- Setter says "I'd imagine that's demanding" after you mention job = feels natural and solid, feel heard
+- Setter responds to something SPECIFIC you said with something contextually relevant = feel genuinely heard, open up more
+
+OBJECTIONS — throw naturally at right moments:
+- "What's the price?" — early if curious or guarded
+- "Are you actually ${offer.name} or is this a setter?" — if setter feels scripted or fires questions without relating
+- ${persona.scam?`"I've been scammed before" — bring up naturally as a real concern`:"Raise scam concern only if trust very low"}
+- "Now's not the right time" — if urgency not built before proposal
+- "I need more info before booking" — at proposal if trust not fully built
+- "Can we do next week instead?" — to push back on timing
+
+STAGES — only progress when setter earns it:
+1. Keyword sent (done) → setter opens
+2. Qualifying (job → financial if yellow/red flag)
+3. Layer 1 goal
+4. Layer 2 underlying reason
+5. Timeline
+6. Urgency / why now
+7. Obstacle
+8. Proposal
+9. Booking or objection
+
+Keep replies 1-4 sentences unless genuinely warmed up. Speak naturally in your persona's voice. Never dump all info at once.`;
+}
+
+function buildScoreSys(){
+  return `You are an expert appointment setting coach. Score this DM mock session strictly and honestly.
+
+OFFER: ${offer.name} | ${offer.biz} | ${offer.price}
+LEAD: ${persona.name} | ${persona.job} | Flag: ${persona.flag} | Actual income: £${persona.income}/month
+
+YELLOW/RED FLAG CORRECT PROCESS:
+1. Spot yellow flag in lead's messages (low pay, part time, hours cut etc)
+2. Ask: "Ideally how much are you looking to make from [biz] for it to match your current income, just so I can see if it's realistic"
+3. If big goal number given → follow up "how far away from that with what you currently earn?"
+4. If under £2k → send hard qualify message about needing 2-4k aside
+5. If income fine → continue framework normally
+
+RELATABILITY SCORING — contextual and strict:
+- "Wow that's tough" AFTER lead gave specific painful detail = good, contextual
+- "Wow that's tough" with NO detail from lead = bad, assumptive, score low
+- "I'd imagine that's demanding" after job mention = solid universal relatability
+- "Gotchu bro" / "awesome" / "100%" alone = poor, score low
+- Did setter actually respond to what lead SPECIFICALLY said or just fire templates?
+- Did setter share genuine perspective or personal story that connected?
+
+LISTENING:
+- Did setter build on specific details lead mentioned in previous messages?
+- Did questions flow naturally from responses or feel scripted?
+
+Find the SINGLE biggest weakness: relatability, listening, framework, or qualifying.
+Focus ALL feedback on that one weakness only. Give only feedback that will move the needle most for their next conversation.
+
+Respond ONLY in this exact JSON, no markdown, no backticks:
+{"relatability":<0-25>,"listening":<0-25>,"framework":<0-25>,"qualifying":<0-25>,"total":<0-100>,"flag_caught":<true|false>,"dq_correct":<true|false>,"core_weakness":"<relatability|listening|framework|qualifying>","needle_mover":"<2-3 sentences MAX. The one thing that will improve their next convo most. Specific and direct.>","best_moment":"<One sentence on what they did best>"}`;
+}
+
+async function apiCall(endpoint, system, messages){
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({system, messages})
+  });
+  if(!res.ok) throw new Error("Server error "+res.status);
+  const d = await res.json();
+  if(d.error) throw new Error(d.error);
+  return d.reply;
+}
+
+async function getReply(msg){
+  const msgs=[...history,{role:"user",content:msg}];
+  const reply = await apiCall("/api/chat", buildSys(), msgs);
+  history.push({role:"user",content:msg});
+  history.push({role:"assistant",content:reply});
+  return reply;
+}
+
+async function getScore(){
+  const convo=history.map(m=>`${m.role==="user"?"LEAD":"SETTER"}: ${m.content}`).join("\n\n");
+  const scorePrompt=`Score this conversation:\n\n${convo}`;
+  const reply = await apiCall("/api/score", buildScoreSys(), [{role:"user",content:scorePrompt}]);
+  try{return JSON.parse(reply.replace(/```json|```/g,"").trim())}
+  catch{return null}
+}
+
+function sc(n,max){const p=n/max;return p>=0.8?"sg":p>=0.5?"sa":"sr";}
+
+function renderScore(s){
+  if(!s)return;
+  const flagLabel={"qualified":"Qualified","yellow":"Yellow flag","red":"Red flag"}[persona.flag]||persona.flag;
+  const flagRows=persona.flag!=="qualified"?`
+    <div class="score-row"><span class="score-label">Flag identified</span><span class="score-val ${s.flag_caught?"sg":"sr"}">${s.flag_caught?"✓ Yes":"✗ Missed"}</span></div>
+    <div class="score-row"><span class="score-label">DQ handled correctly</span><span class="score-val ${s.dq_correct?"sg":"sr"}">${s.dq_correct?"✓ Yes":"✗ No"}</span></div>`:"";
+  const weakLabel={"relatability":"Relatability","listening":"Listening & context","framework":"Framework execution","qualifying":"Qualifying technique"}[s.core_weakness]||s.core_weakness;
+  const card=document.createElement("div");
+  card.className="score-card";
+  card.innerHTML=`
+    <h3>Scorecard — ${persona.name} (${flagLabel} lead)</h3>
+    <div class="score-row"><span class="score-label">Relatability</span><span class="score-val ${sc(s.relatability,25)}">${s.relatability}/25</span></div>
+    <div class="score-row"><span class="score-label">Listening & context</span><span class="score-val ${sc(s.listening,25)}">${s.listening}/25</span></div>
+    <div class="score-row"><span class="score-label">Framework</span><span class="score-val ${sc(s.framework,25)}">${s.framework}/25</span></div>
+    <div class="score-row"><span class="score-label">Qualifying</span><span class="score-val ${sc(s.qualifying,25)}">${s.qualifying}/25</span></div>
+    ${flagRows}
+    <div class="score-row total-row"><span class="score-label">Total</span><span class="score-val ${sc(s.total,100)}" style="font-size:18px">${s.total}/100</span></div>
+    <div class="divider"></div>
+    <div class="score-feedback">
+      <div class="sf-row"><strong>Core weakness — ${weakLabel}:</strong><br>${s.needle_mover||"—"}</div>
+      <div class="sf-row"><strong>Best moment:</strong><br>${s.best_moment||"—"}</div>
+    </div>`;
+  const wrap=document.createElement("div");
+  wrap.className="bw system";wrap.appendChild(card);
+  document.getElementById("messages").appendChild(wrap);
+  document.getElementById("messages").scrollTop=99999;
+}
+
+function addBubble(who,text){
+  const msgs=document.getElementById("messages");
+  const wrap=document.createElement("div");wrap.className=`bw ${who}`;
+  const b=document.createElement("div");b.className=`bubble ${who}`;b.textContent=text;
+  wrap.appendChild(b);msgs.appendChild(wrap);msgs.scrollTop=99999;
+}
+
+function showTyping(){
+  const msgs=document.getElementById("messages");
+  const w=document.createElement("div");w.className="bw lead";w.id="typ";
+  w.innerHTML=`<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  msgs.appendChild(w);msgs.scrollTop=99999;
+}
+function removeTyping(){const e=document.getElementById("typ");if(e)e.remove();}
+
+function isOver(msg){
+  const m=msg.toLowerCase();
+  return m.includes("calendar")||
+    (m.includes("book")&&(m.includes("call")||m.includes("in")))||
+    m.includes("free tomorrow")||m.includes("free this week")||
+    m.includes("schedule a call")||m.includes("send you the link")||
+    history.length>42;
+}
+
+async function sendMessage(){
+  if(isWaiting||sessionEnded)return;
+  const input=document.getElementById("msg-input");
+  const text=input.value.trim();if(!text)return;
+  addBubble("setter",text);
+  input.value="";input.style.height="44px";
+  isWaiting=true;document.getElementById("send-btn").disabled=true;
+  showTyping();
+  await new Promise(r=>setTimeout(r,700+Math.random()*2000));
+  try{
+    const reply=await getReply(text);
+    removeTyping();addBubble("lead",reply);
+    if(isOver(text)){
+      sessionEnded=true;
+      document.getElementById("msg-input").disabled=true;
+      document.getElementById("send-btn").disabled=true;
+      addBubble("system","Scoring your session...");
+      const score=await getScore();
+      const msgs=document.getElementById("messages");
+      const last=msgs.lastElementChild;
+      if(last&&last.querySelector&&last.querySelector(".bubble.system"))last.remove();
+      renderScore(score);
+    }else{
+      isWaiting=false;
+      document.getElementById("send-btn").disabled=false;
+    }
+  }catch(e){
+    removeTyping();
+    addBubble("system","Connection error — check your server is running.");
+    isWaiting=false;
+    document.getElementById("send-btn").disabled=false;
+  }
+}
+
+function handleKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function autoResize(el){el.style.height="44px";el.style.height=Math.min(el.scrollHeight,120)+"px";}
+</script>
+</body>
+</html>
