@@ -20,7 +20,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/" or self.path == "/index.html":
-            self.serve_file("static/index.html", "text/html")
+            # Try both locations
+            if os.path.exists("static/index.html"):
+                self.serve_file("static/index.html", "text/html")
+            elif os.path.exists("index.html"):
+                self.serve_file("index.html", "text/html")
+            else:
+                self.send_response(404)
+                self.end_headers()
         else:
             self.send_response(404)
             self.end_headers()
